@@ -1,0 +1,126 @@
+---
+title: "STA 160 Midterm Project"
+author: "Jordan Brennan"
+date: "4/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(knitr)
+library(tidyverse)
+library(kableExtra)
+library(GGally)
+library(FactoMineR)
+library(gridExtra)
+library(dplyr)
+library(factoextra)
+
+seeds <- read.csv("C:/Users/Jordan/Downloads/seeds_dataset.txt", header = FALSE, sep = "")
+names(seeds) <- (c("Area", "Perimeter", "Compactness", "Kernel.Length", "Kernel.Width", "Asym.Coeff", "Kernel.Groove", "Types"))
+
+
+kable(seeds[1:5, ]) %>%
+  kable_styling("striped")
+```
+
+
+
+
+```{r}
+seeds$Types <- as.factor(seeds$Types)
+library(ggplot2)
+
+# Correlation panel
+panel.cor <- function(x, y){
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- round(cor(x, y, method = "pearson", use = "complete.obs"), digits=2)
+    txt <- paste0(r)
+    cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+# Customize upper panel
+lower.panel<-function(x, y){
+  points(x,y, col = my_cols[seeds$Types])
+}
+# Create the plots
+pairs(seeds, 
+      lower.panel = lower.panel,
+      upper.panel = panel.cor)
+```
+
+
+
+```{r}
+library(psych)
+pairs.panels(
+       seeds[,1:8],  # Our data.
+       scale = TRUE,  # Changes size of correlation value lables based on strength.
+       hist.col = 'grey85', # Histogram color.  
+       bg = c("springgreen3","orange","mediumpurple1", "red", "cyan", "blue")[seeds$Type], # Colors of the Species data points.
+       pch = 21,  # The plot characters/data points shape and size.
+       main = 'Correlation matrix of Iris data') # The title. 
+```
+
+
+```{r}
+library(corrgram)
+corrgram(seeds, order=TRUE, lower.panel=panel.shade,
+  upper.panel=panel.pie, text.panel=panel.txt,
+  main="Seeds Data")
+```
+
+```{r}
+library("gplots")
+df <- scale(seeds)
+
+heatmap(df)
+
+heatmap(df, col = heat.colors(210), margins = c(7,6))
+```
+
+
+```{r}
+seeds_analysis <- seeds
+seeds_analysis$Types <- NULL
+seeds_z <-scale(seeds[,-8])
+
+wss <- function(data, maxCluster = 10) {
+  set.seed(50)
+  SSw <- (nrow(data) - 1) * sum(apply(data, 2, var))
+  SSw <- vector()
+  for (i in 2:maxCluster) {
+    SSw[i] <- sum(kmeans(data, centers = i)$tot.withinss)
+  }
+  plot(1:maxCluster, SSw, type = "o", xlab = "Number of Clusters", ylab = "Total Within Sum of Squares", pch=19)
+}
+
+wss(seeds_analysis)
+```
+
+```{r}
+set.seed(70)
+k_result <- kmeans(seed_analysis, 3)
+k_result
+```
+
+
+
+```{r}
+seeds$cluster <- as.factor(seed_k$cluster)
+
+seeds %>% 
+  group_by(cluster) %>% 
+  summarise_all(.,"mean") %>%
+  kable %>%
+  kable_styling("striped")
+
+fviz_cluster(object = k_result, 
+             data = seed_z)
+```
+

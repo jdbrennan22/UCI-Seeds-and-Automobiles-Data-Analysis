@@ -1,0 +1,147 @@
+---
+title: "Untitled"
+author: "Jordan Brennan"
+date: "5/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(MASS)
+library(tidyverse)
+library(ggplot2)
+library(MASS)
+library(corrplot)
+library(caret)
+library(gridExtra)
+library(cowplot)
+```
+
+
+```{r}
+autos <- read.csv("C:/Users/Jordan/Downloads/imports-85.data", header = FALSE)
+autos <- autos %>% mutate(V2 = recode(V2, "?" = NA_character_))
+autos <- autos %>% mutate(V6 = recode(V6, "?" = NA_character_))
+autos <- autos %>% mutate(V19 = recode(V19, "?" = NA_character_))
+autos <- autos %>% mutate(V20 = recode(V20, "?" = NA_character_))
+autos <- autos %>% mutate(V26 = recode(V26, "?" = NA_character_))
+
+autos <- autos[,3:26]
+
+autos <- autos %>% rename(
+ make =V3,
+ fuel_type =V4,
+ aspir =V5,
+ doors =V6,
+ body =V7,
+ drive =V8,
+ eng_loc =V9,
+ wheel =V10,
+ length =V11,
+ width =V12,
+ height =V13,
+ curb_wt =V14,
+ eng_type =V15,
+ cyl =V16,
+ eng_size =V17,
+ fuel_sys =V18,
+ bore =V19,
+ stroke =V20,
+ compr =V21,
+ hrs_pwr =V22,
+ peak_rpm =V23,
+ city_mpg=V24,
+ hwy_mpg =V25,
+ price =V26) 
+```
+
+
+```{r}
+autos_con <- autos[,sapply(autos,is.numeric)]
+autos_cat <- autos[,sapply(autos,is.factor)]
+autos_con <- autos_con %>% mutate(bore = autos$bore) 
+autos_con <- autos_con %>% mutate(hrs_pwr = autos$hrs_pwr) 
+autos_con <- autos_con %>% mutate(peak_rpm = autos$peak_rpm) 
+autos_con <- autos_con %>% mutate(stroke = autos$stroke) 
+autos_con <- autos_con %>% mutate(price = autos$price) 
+
+autos_con$bore <- as.numeric(autos_con$bore)
+autos_con$hrs_pwr <- as.numeric(autos_con$hrs_pwr)
+autos_con$peak_rpm <- as.numeric(autos_con$peak_rpm)
+autos_con$stroke <- as.numeric(autos_con$stroke)
+autos_con$price <- as.numeric(as.character(autos_con$price))
+
+autos_cat$price <- as.numeric(as.character(autos_cat$price))
+autos_cat <- autos_cat[-c(11,12,13,14)]
+length(autos_cat)
+length(autos_con)
+```
+
+```{r}
+# Correlation panel
+panel.cor <- function(x, y){
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- round(cor(x, y, method = "pearson", use = "complete.obs"), digits=2)
+    txt <- paste0(r)
+    cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+lower.panel<-function(x, y){
+  points(x,y)
+}
+# Create the plots
+pairs(autos_con, 
+      lower.panel = lower.panel,
+      upper.panel = panel.cor)
+```
+
+
+```{r}
+p1 <- autos_cat %>% ggplot(aes(x=make, y=price, fill = make)) + geom_boxplot() + theme(axis.text.x=element_blank())
+
+p2 <- ggplot(data = autos_cat, aes(x=fuel_type, y=price, fill = fuel_type)) + geom_boxplot()
+
+p3 <- ggplot(data = autos_cat, aes(x=aspir, y=price, fill = aspir)) + geom_boxplot()
+
+p4 <- ggplot(data = autos_cat, aes(x=doors, y=price, fill = doors)) + geom_boxplot()
+
+p5 <- ggplot(data = autos_cat, aes(x=body, y=price, fill = body)) + geom_boxplot() + theme(axis.text.x=element_blank())
+
+p6 <- ggplot(data = autos_cat, aes(x=drive, y=price, fill = drive)) + geom_boxplot()
+
+p7 <- ggplot(data = autos_cat, aes(x=eng_loc, y=price, fill = eng_loc)) + geom_boxplot()
+
+p8 <- ggplot(data = autos_cat, aes(x=eng_type, y=price, fill = eng_type)) + geom_boxplot() + theme(axis.text.x=element_blank())
+
+p9 <- ggplot(data = autos_cat, aes(x=cyl, y=price, fill = cyl))+ geom_boxplot() + theme(axis.text.x=element_blank())
+
+p10 <- ggplot(data = autos_cat, aes(x=fuel_sys, y=price, fill = fuel_sys))+ geom_boxplot() + theme(axis.text.x=element_blank())
+```
+
+
+
+```{r}
+autos$price <- as.numeric(autos$price)
+  price.gas <- auto[auto$fuel.type %in% "gas",]$price
+  price.diesel <- auto[auto$fuel.type %in% "diesel",]$price
+
+  length(price.gas)
+```
+
+
+
+```{r}
+autos<-autos %>% na.omit
+
+res.aov <- aov(price ~ eng_size + curb_wt + make + drive + eng_loc + eng_type + fuel_sys, data = autos)
+# Summary of the analysis
+summary(res.aov)
+
+plot(res.aov)
+```
+
+
+
